@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
@@ -7,23 +8,70 @@ public class GridSquare : Selectable, IPointerClickHandler
 {
     [SerializeField] private TMP_Text numberText;
     [SerializeField] private Image cellImage;
+
     private int number = 0;
     private int row;
     private int col;
+
+    private bool isFixed = false;
     private SudokuGrid sudokuGrid;
 
-    private void DisplayNumber()
+    public void SetGridManager(SudokuGrid manager)
     {
-        if(number == 0)
-            numberText.text = "";
-        else
-            numberText.text = number.ToString();
+        sudokuGrid = manager;
     }
 
     public void SetNumber(int newNumber)
     {
+        if (isFixed) return;
+
         number = newNumber;
         DisplayNumber();
+        SetNumberColor(Color.black);
+    }
+
+    // Used only for original puzzle clues.
+    public void SetFixedNumber(int newNumber)
+    {
+        number = newNumber;
+        isFixed = true;
+
+        DisplayNumber();
+        SetNumberColor(Color.black);
+    }
+
+    public void SetPuzzleNumber(int value)
+    {
+        number = value;
+        isFixed = value != 0;
+
+        DisplayNumber();
+        SetNumberColor(Color.black);
+    }
+
+    public bool IsFixed()
+    {
+        return isFixed;
+    }
+
+    public int GetNumber()
+    {
+        return number;
+    }
+
+    private void DisplayNumber()
+    {
+        numberText.text = number == 0 ? "" : number.ToString();
+    }
+
+    public void SetNumberColor(Color color)
+    {
+        numberText.color = color;
+    }
+
+    public void SetCellColor(Color color)
+    {
+        cellImage.color = color;
     }
 
     public void SetRowAndColumnPos(int row, int col)
@@ -32,14 +80,13 @@ public class GridSquare : Selectable, IPointerClickHandler
         this.col = col;
     }
 
-    public void SetGridManager(SudokuGrid manager)
+    public void ClearNumber()
     {
-        sudokuGrid = manager;
-    }
+        if (isFixed) return;
 
-    public void SetCellColor(Color color)
-    {
-        cellImage.color = color;
+        number = 0;
+        DisplayNumber();
+        SetNumberColor(Color.black);
     }
 
     public void OnPointerClick(PointerEventData eventData)
