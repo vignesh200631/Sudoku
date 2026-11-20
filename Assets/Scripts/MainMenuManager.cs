@@ -47,16 +47,20 @@ public class MainMenuManager : MonoBehaviour
 
     private void StartGame(SudokuDifficulty difficulty)
     {
-        // Set difficulty before activating SudokuPanel.
-        sudokuGrid.SetDifficulty(difficulty);
+        // Activate Sudoku panel first.
+        sudokuPanel.SetActive(true);
+
+        // Initialize the selected puzzle.
+        sudokuGrid.InitializePuzzle(difficulty);
 
         homePanel.SetActive(false);
         difficultyPanel.SetActive(false);
-        sudokuPanel.SetActive(true);
     }
 
-    public void Exit()
+    public void ReturnToHome()
     {
-        Application.Quit();
+        sudokuPanel.SetActive(false);
+        difficultyPanel.SetActive(false);
+        homePanel.SetActive(true);
     }
 }

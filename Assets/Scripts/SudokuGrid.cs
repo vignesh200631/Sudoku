@@ -36,49 +36,85 @@ public class SudokuGrid : MonoBehaviour
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private TMP_Text finalTimeText;
 
+    private GridSquare[,] gridSquareArray;
+    private int[,] puzzle;
+    private int[,] solution;
     private int incorrectCount = 0;
     private float elapsedTime = 0f;
     private bool gameOver = false;
 
-    private GridSquare[,] gridSquareArray;
-
     private int selectedRow = -1;
     private int selectedColumn = -1;
-
-    private int[,] puzzle;
-
-    private int[,] solution;
-
+    private bool gridInitialized = false;
     private SudokuDifficulty selectedDifficulty = SudokuDifficulty.Easy;
 
-    private void Start()
+    private void Awake()
     {
+        InitializeGridOnce();
+    }
+
+    private void InitializeGridOnce()
+    {
+        if (gridInitialized)
+            return;
+
         if (gridSquare == null)
         {
-            Debug.LogError("Grid Square is not assigned!");
             return;
         }
-
-        // Load selected puzzle and its solution.
-        puzzle = SudokuPuzzleData.GetPuzzle(selectedDifficulty);
-        solution = SudokuPuzzleData.GetSolution(selectedDifficulty);
 
         gridSquareArray = new GridSquare[rows, columns];
 
         CreateGrid();
-        LoadPuzzle();
 
+        gridInitialized = true;
+    }
+
+    public void InitializePuzzle(SudokuDifficulty difficulty)
+    {
+        InitializeGridOnce();
+
+        if (!gridInitialized)
+            return;
+
+        // Load selected difficulty.
+        selectedDifficulty = difficulty;
+
+        puzzle = SudokuPuzzleData.GetPuzzle(difficulty);
+        solution = SudokuPuzzleData.GetSolution(difficulty);
+
+        // Reset every cell using the selected puzzle.
+        for (int row = 0; row < rows; row++)
+        {
+            for (int column = 0; column < columns; column++)
+            {
+                GridSquare cell = gridSquareArray[row, column];
+
+                cell.SetPuzzleNumber(puzzle[row, column]);
+                cell.SetCellColor(normalColor);
+            }
+        }
+
+        // Reset gameplay state.
         incorrectCount = 0;
         elapsedTime = 0f;
         gameOver = false;
 
+        selectedRow = -1;
+        selectedColumn = -1;
+
+        // Reset UI.
         UpdateMistakeCounter();
+
+        timerText.text = "00:00";
 
         if (victoryPanel != null)
             victoryPanel.SetActive(false);
 
         if (gameOverPanel != null)
             gameOverPanel.SetActive(false);
+
+        Debug.Log("Loaded " + difficulty + " Sudoku puzzle!");
     }
 
     private void Update()
@@ -107,8 +143,7 @@ public class SudokuGrid : MonoBehaviour
             {
                 GameObject square = Instantiate(gridSquare, transform);
 
-                square.transform.localScale =
-                    new Vector3(squareScale, squareScale, squareScale);
+                square.transform.localScale = new Vector3(squareScale, squareScale, squareScale);
 
                 GridSquare cell = square.GetComponent<GridSquare>();
 
@@ -124,41 +159,17 @@ public class SudokuGrid : MonoBehaviour
 
     private void SetGridSquarePosition()
     {
-        RectTransform squareRect =
-            gridSquare.GetComponent<RectTransform>();
+        RectTransform squareRect = gridSquare.GetComponent<RectTransform>();
 
-        Vector2 offset = new Vector2(
-            squareRect.rect.width * squareScale + squareOffset,
-            squareRect.rect.height * squareScale + squareOffset
-        );
+        Vector2 offset = new Vector2( squareRect.rect.width * squareScale + squareOffset, squareRect.rect.height * squareScale + squareOffset);
 
         for (int row = 0; row < rows; row++)
         {
             for (int column = 0; column < columns; column++)
             {
-                Vector2 position = new Vector2(
-                    startingPos.x + offset.x * column,
-                    startingPos.y - offset.y * row
-                );
+                Vector2 position = new Vector2( startingPos.x + offset.x * column, startingPos.y - offset.y * row);
 
-                gridSquareArray[row, column]
-                    .GetComponent<RectTransform>().anchoredPosition = position;
-            }
-        }
-    }
-
-    private void LoadPuzzle()
-    {
-        for (int row = 0; row < rows; row++)
-        {
-            for (int column = 0; column < columns; column++)
-            {
-                int value = puzzle[row, column];
-
-                if (value != 0)
-                {
-                    gridSquareArray[row, column].SetFixedNumber(value);
-                }
+                gridSquareArray[row, column].GetComponent<RectTransform>().anchoredPosition = position;
             }
         }
     }
@@ -185,9 +196,7 @@ public class SudokuGrid : MonoBehaviour
                 bool sameRow = row == selectedRow;
                 bool sameColumn = column == selectedColumn;
 
-                bool sameBlock =
-                    row >= startRow && row < startRow + 3 &&
-                    column >= startColumn && column < startColumn + 3;
+                bool sameBlock = row >= startRow && row < startRow + 3 && column >= startColumn && column < startColumn + 3;
 
                 if (sameRow || sameColumn || sameBlock)
                 {
@@ -202,8 +211,7 @@ public class SudokuGrid : MonoBehaviour
             }
         }
 
-        gridSquareArray[selectedRow, selectedColumn]
-            .SetCellColor(selectedColor);
+        gridSquareArray[selectedRow, selectedColumn].SetCellColor(selectedColor);
     }
 
     // Called when a number button is pressed.
@@ -214,12 +222,10 @@ public class SudokuGrid : MonoBehaviour
 
         if (selectedRow == -1 || selectedColumn == -1)
         {
-            Debug.Log("Please select a cell first.");
             return;
         }
 
-        GridSquare selectedCell =
-            gridSquareArray[selectedRow, selectedColumn];
+        GridSquare selectedCell = gridSquareArray[selectedRow, selectedColumn];
 
         if (selectedCell.IsFixed())
         {
@@ -232,8 +238,6 @@ public class SudokuGrid : MonoBehaviour
             selectedCell.SetNumber(number);
             selectedCell.SetNumberColor(normalNumberColor);
 
-            Debug.Log("Correct answer!");
-
             CheckWinCondition();
         }
         else
@@ -242,8 +246,6 @@ public class SudokuGrid : MonoBehaviour
             selectedCell.SetNumberColor(invalidNumberColor);
 
             RegisterIncorrectMove();
-
-            Debug.Log("Wrong answer!");
         }
     }
 
@@ -251,12 +253,10 @@ public class SudokuGrid : MonoBehaviour
     {
         if (selectedRow == -1 || selectedColumn == -1)
         {
-            Debug.Log("Please select a cell first.");
             return;
         }
 
-        GridSquare selectedCell =
-            gridSquareArray[selectedRow, selectedColumn];
+        GridSquare selectedCell = gridSquareArray[selectedRow, selectedColumn];
 
         if (selectedCell.IsFixed())
         {
@@ -271,8 +271,7 @@ public class SudokuGrid : MonoBehaviour
 
     private void UpdateMistakeCounter()
     {
-        mistakeText.text = "Mistakes: " +
-            incorrectCount + "/" + maxMistakes;
+        mistakeText.text = "Mistakes: " + incorrectCount + "/" + maxMistakes;
     }
 
     private void RegisterIncorrectMove()
@@ -318,8 +317,7 @@ public class SudokuGrid : MonoBehaviour
         {
             for (int column = 0; column < columns; column++)
             {
-                int playerNumber =
-                    gridSquareArray[row, column].GetNumber();
+                int playerNumber = gridSquareArray[row, column].GetNumber();
 
                 int correctNumber = solution[row, column];
 
@@ -340,8 +338,7 @@ public class SudokuGrid : MonoBehaviour
         int minutes = Mathf.FloorToInt(elapsedTime / 60);
         int seconds = Mathf.FloorToInt(elapsedTime % 60);
 
-        completionTimeText.text =
-            string.Format("Time: {0:00}:{1:00}", minutes, seconds);
+        completionTimeText.text = string.Format("Time: {0:00}:{1:00}", minutes, seconds);
 
         victoryPanel.SetActive(true);
 
@@ -351,57 +348,7 @@ public class SudokuGrid : MonoBehaviour
 
     public void RestartPuzzle()
     {
-        // Reset game status.
-        gameOver = false;
-
-        // Reset timer and mistakes.
-        elapsedTime = 0f;
-        incorrectCount = 0;
-
-        // Update UI.
-        UpdateMistakeCounter();
-        timerText.text = "00:00";
-
-        // Hide victory panel.
-        if (victoryPanel != null)
-        {
-            victoryPanel.SetActive(false);
-        }
-
-        //Hide gameover panel
-        if(gameOverPanel != null)
-        {
-            gameOverPanel.SetActive(false);
-        }
-
-        // Reset every cell to the original puzzle.
-        for (int row = 0; row < rows; row++)
-        {
-            for (int column = 0; column < columns; column++)
-            {
-                int originalNumber = puzzle[row, column];
-
-                GridSquare cell = gridSquareArray[row, column];
-
-                if (originalNumber != 0)
-                {
-                    cell.SetFixedNumber(originalNumber);
-                }
-                else
-                {
-                    cell.SetNumber(0);
-                    cell.SetNumberColor(normalNumberColor);
-                }
-
-                cell.SetCellColor(normalColor);
-            }
-        }
-
-        // Clear selected cell.
-        selectedRow = -1;
-        selectedColumn = -1;
-
-        Debug.Log("Puzzle restarted!");
+        InitializePuzzle(selectedDifficulty);
     }
 
     public void SetDifficulty(SudokuDifficulty difficulty)
