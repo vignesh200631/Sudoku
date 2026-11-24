@@ -341,7 +341,7 @@ public class PairTechniqueTester : MonoBehaviour
         CandidateGrid grid = new CandidateGrid(board);
 
         int number = 2;
-
+ 
         // Column 0 and column 5 contain candidate 2
         // only in rows 2 and 7.
         for (int row = 0; row < 9; row++)
