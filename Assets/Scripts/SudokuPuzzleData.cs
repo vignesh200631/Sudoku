@@ -1,13 +1,8 @@
 
-public enum SudokuDifficulty
-{
-    Easy,
-    Medium,
-    Hard
-}
 
 public static class SudokuPuzzleData
 {
+    public static SudokuDifficulty difficulty;
     // 0 means an empty cell.
 
     // EASY PUZZLE

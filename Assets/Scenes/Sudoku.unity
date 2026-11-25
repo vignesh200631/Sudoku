@@ -1795,6 +1795,7 @@ GameObject:
   - component: {fileID: 350106076}
   - component: {fileID: 350106077}
   - component: {fileID: 350106078}
+  - component: {fileID: 350106079}
   m_Layer: 0
   m_Name: Tester
   m_TagString: Untagged
@@ -1863,11 +1864,23 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 350106073}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: df31422dc579f3a4a83c0645bc048ef4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PairTechniqueTester
+--- !u!114 &350106079
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 350106073}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 902b5253778409345adadd40858e0b60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SudokuDifficultyClassifierTester
 --- !u!1 &351681828
 GameObject:
   m_ObjectHideFlags: 0

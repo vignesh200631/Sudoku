@@ -11,6 +11,12 @@ public class DifficultyAnalysisResult
 
     public string Status { get; private set; }
 
+    public bool HasClassification { get; private set; }
+
+    public SudokuDifficulty ClassifiedDifficulty { get; private set; }
+
+    public SudokuBoard SolvedBoard { get; private set; }
+
     public DifficultyAnalysisResult(
         bool isSolved,
         SolvingTechnique highestTechnique,
@@ -23,5 +29,16 @@ public class DifficultyAnalysisResult
         StepsUsed = stepsUsed;
         RemainingCells = remainingCells;
         Status = status;
+    }
+
+    internal void SetClassification(SudokuDifficulty difficulty)
+    {
+        ClassifiedDifficulty = difficulty;
+        HasClassification = true;
+    }
+
+    internal void SetSolvedBoard(SudokuBoard board)
+    {
+        SolvedBoard = board?.Clone();
     }
 }

@@ -13,8 +13,10 @@ public class PairTechniqueTester : MonoBehaviour
         //TestActualPointingPair();
         //TestRowBasedBoxLineReduction();
         //TestColumnBasedBoxLineReduction();
-        TestRowBasedXWing();
-        TestColumnBasedXWing();
+        //TestRowBasedXWing();
+        //TestColumnBasedXWing();
+        TestRowBasedSwordfish();
+        TestColumnBasedSwordfish();
     }
 
     private void TestActualNakedPair()
@@ -397,6 +399,160 @@ public class PairTechniqueTester : MonoBehaviour
         Debug.Log("TEST PASSED: " +
             (detected && allRemoved && cornersRemain));
     }
+
+
+    private void TestRowBasedSwordfish()
+    {
+        SudokuBoard board = new SudokuBoard();
+        CandidateGrid grid = new CandidateGrid(board);
+
+        int number = 5;
+
+        // Swordfish rows:
+        // Row 0 -> columns 0, 1
+        // Row 3 -> columns 1, 2
+        // Row 6 -> columns 0, 2
+
+        RestrictSwordfishRow(grid, 0, number, 0, 1);
+        RestrictSwordfishRow(grid, 3, number, 1, 2);
+        RestrictSwordfishRow(grid, 6, number, 0, 2);
+
+        Debug.Log("===== ROW-BASED SWORDFISH TEST =====");
+
+        Debug.Log("Before elimination at (1,0): " +
+            grid.HasCandidate(1, 0, number));
+
+        DifficultyAnalyzer analyzer = new DifficultyAnalyzer();
+
+        bool detected = false;
+
+        while (analyzer.DebugApplySwordfish(board, grid))
+        {
+            detected = true;
+        }
+
+        bool allRemoved = true;
+
+        // Check columns 0, 1 and 2 outside the three base rows.
+        for (int row = 0; row < 9; row++)
+        {
+            if (row == 0 || row == 3 || row == 6)
+                continue;
+
+            for (int column = 0; column < 3; column++)
+            {
+                if (grid.HasCandidate(row, column, number))
+                    allRemoved = false;
+            }
+        }
+
+        // Verify all original Swordfish positions remain.
+        bool patternRemains =
+            grid.HasCandidate(0, 0, number) &&
+            grid.HasCandidate(0, 1, number) &&
+            grid.HasCandidate(3, 1, number) &&
+            grid.HasCandidate(3, 2, number) &&
+            grid.HasCandidate(6, 0, number) &&
+            grid.HasCandidate(6, 2, number);
+
+        Debug.Log("Detected: " + detected);
+        Debug.Log("External candidates removed: " + allRemoved);
+        Debug.Log("Swordfish positions remain: " + patternRemains);
+
+        Debug.Log("TEST PASSED: " +
+            (detected && allRemoved && patternRemains));
+    }
+
+    private void TestColumnBasedSwordfish()
+    {
+        SudokuBoard board = new SudokuBoard();
+        CandidateGrid grid = new CandidateGrid(board);
+
+        int number = 6;
+
+        // Swordfish columns:
+        // Column 0 -> rows 0, 1
+        // Column 3 -> rows 1, 2
+        // Column 6 -> rows 0, 2
+
+        RestrictSwordfishColumn(grid, 0, number, 0, 1);
+        RestrictSwordfishColumn(grid, 3, number, 1, 2);
+        RestrictSwordfishColumn(grid, 6, number, 0, 2);
+
+        Debug.Log("===== COLUMN-BASED SWORDFISH TEST =====");
+
+        Debug.Log("Before elimination at (0,2): " +
+            grid.HasCandidate(0, 2, number));
+
+        DifficultyAnalyzer analyzer = new DifficultyAnalyzer();
+
+        bool detected = false;
+
+        while (analyzer.DebugApplySwordfish(board, grid))
+        {
+            detected = true;
+        }
+
+        bool allRemoved = true;
+
+        // Check rows 0, 1 and 2 outside the three base columns.
+        for (int column = 0; column < 9; column++)
+        {
+            if (column == 0 || column == 3 || column == 6)
+                continue;
+
+            for (int row = 0; row < 3; row++)
+            {
+                if (grid.HasCandidate(row, column, number))
+                    allRemoved = false;
+            }
+        }
+
+        // Verify all original Swordfish positions remain.
+        bool patternRemains =
+            grid.HasCandidate(0, 0, number) &&
+            grid.HasCandidate(1, 0, number) &&
+            grid.HasCandidate(1, 3, number) &&
+            grid.HasCandidate(2, 3, number) &&
+            grid.HasCandidate(0, 6, number) &&
+            grid.HasCandidate(2, 6, number);
+
+        Debug.Log("Detected: " + detected);
+        Debug.Log("External candidates removed: " + allRemoved);
+        Debug.Log("Swordfish positions remain: " + patternRemains);
+
+        Debug.Log("TEST PASSED: " +
+            (detected && allRemoved && patternRemains));
+    }
+
+    private void RestrictSwordfishRow(
+        CandidateGrid grid,
+        int row,
+        int number,
+        int columnA,
+        int columnB)
+    {
+        for (int column = 0; column < 9; column++)
+        {
+            if (column != columnA && column != columnB)
+                grid.RemoveCandidate(row, column, number);
+        }
+    }
+
+    private void RestrictSwordfishColumn(
+        CandidateGrid grid,
+        int column,
+        int number,
+        int rowA,
+        int rowB)
+    {
+        for (int row = 0; row < 9; row++)
+        {
+            if (row != rowA && row != rowB)
+                grid.RemoveCandidate(row, column, number);
+        }
+    }
+
 
 }
 

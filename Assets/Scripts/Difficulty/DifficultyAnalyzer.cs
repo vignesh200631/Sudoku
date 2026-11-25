@@ -1,4 +1,4 @@
-
+using UnityEngine;
 using System.Collections.Generic;
 
 public class DifficultyAnalyzer
@@ -50,8 +50,8 @@ public class DifficultyAnalyzer
 
             if (ApplyHiddenPair())
                 continue;
-
-            if(ApplyPointingPair())
+            
+            if (ApplyPointingPair())
                 continue;
 
             if (ApplyBoxLineReduction())
@@ -59,8 +59,12 @@ public class DifficultyAnalyzer
 
             if (ApplyXWing())
                 continue;
+        
+            if (ApplySwordfish())
+                continue;
 
             break;
+
         }
 
         return CreateResult(
@@ -338,6 +342,7 @@ public class DifficultyAnalyzer
 
                         if (changed)
                         {
+                            steps++;
                             RecordTechnique(SolvingTechnique.HiddenPair);
                             return true;
                         }
@@ -796,6 +801,161 @@ public class DifficultyAnalyzer
     }
 
 
+    private bool ApplySwordfish()
+    {
+        // =========================================
+        // PART 1: ROW-BASED SWORDFISH
+        // =========================================
+
+        for (int number = 1; number <= 9; number++)
+        {
+            for (int rowA = 0; rowA < 7; rowA++)
+            {
+                List<int> columnsA = GetCandidateColumns(rowA, number);
+
+                if (columnsA.Count < 2 || columnsA.Count > 3)
+                    continue;
+
+                for (int rowB = rowA + 1; rowB < 8; rowB++)
+                {
+                    List<int> columnsB = GetCandidateColumns(rowB, number);
+
+                    if (columnsB.Count < 2 || columnsB.Count > 3)
+                        continue;
+
+                    for (int rowC = rowB + 1; rowC < 9; rowC++)
+                    {
+                        List<int> columnsC = GetCandidateColumns(rowC, number);
+
+                        if (columnsC.Count < 2 || columnsC.Count > 3)
+                            continue;
+
+                        HashSet<int> coverColumns = new HashSet<int>();
+
+                        foreach (int column in columnsA)
+                            coverColumns.Add(column);
+
+                        foreach (int column in columnsB)
+                            coverColumns.Add(column);
+
+                        foreach (int column in columnsC)
+                            coverColumns.Add(column);
+
+                        // Swordfish must cover exactly three columns.
+                        if (coverColumns.Count != 3)
+                            continue;
+
+                        // Eliminate candidates from other rows
+                        // in the three cover columns.
+                        for (int row = 0; row < 9; row++)
+                        {
+                            if (row == rowA || row == rowB || row == rowC)
+                                continue;
+
+                            foreach (int column in coverColumns)
+                            {
+                                if (board.GetCell(row, column) != 0)
+                                    continue;
+
+                                if (candidateGrid.HasCandidate(
+                                    row, column, number))
+                                {
+                                    candidateGrid.RemoveCandidate(
+                                        row, column, number);
+
+                                    steps++;
+                                    RecordTechnique(
+                                        SolvingTechnique.Swordfish);
+
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // =========================================
+        // PART 2: COLUMN-BASED SWORDFISH
+        // =========================================
+
+        for (int number = 1; number <= 9; number++)
+        {
+            for (int columnA = 0; columnA < 7; columnA++)
+            {
+                List<int> rowsA = GetCandidateRows(columnA, number);
+
+                if (rowsA.Count < 2 || rowsA.Count > 3)
+                    continue;
+
+                for (int columnB = columnA + 1; columnB < 8; columnB++)
+                {
+                    List<int> rowsB = GetCandidateRows(columnB, number);
+
+                    if (rowsB.Count < 2 || rowsB.Count > 3)
+                        continue;
+
+                    for (int columnC = columnB + 1; columnC < 9; columnC++)
+                    {
+                        List<int> rowsC = GetCandidateRows(columnC, number);
+
+                        if (rowsC.Count < 2 || rowsC.Count > 3)
+                            continue;
+
+                        HashSet<int> coverRows = new HashSet<int>();
+
+                        foreach (int row in rowsA)
+                            coverRows.Add(row);
+
+                        foreach (int row in rowsB)
+                            coverRows.Add(row);
+
+                        foreach (int row in rowsC)
+                            coverRows.Add(row);
+
+                        // Swordfish must cover exactly three rows.
+                        if (coverRows.Count != 3)
+                            continue;
+
+                        // Eliminate candidates from other columns
+                        // in the three cover rows.
+                        for (int column = 0; column < 9; column++)
+                        {
+                            if (column == columnA ||
+                                column == columnB ||
+                                column == columnC)
+                                continue;
+
+                            foreach (int row in coverRows)
+                            {
+                                if (board.GetCell(row, column) != 0)
+                                    continue;
+
+                                if (candidateGrid.HasCandidate(
+                                    row, column, number))
+                                {
+                                    candidateGrid.RemoveCandidate(
+                                        row, column, number);
+
+                                    steps++;
+                                    RecordTechnique(
+                                        SolvingTechnique.Swordfish);
+
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+
 
     // Get the nine cells belonging to one row, column or block.
     private List<int[]> GetUnitCells(int unit)
@@ -880,36 +1040,50 @@ public class DifficultyAnalyzer
         return a[0] == b[0] && a[1] == b[1];
     }
 
+    
     private void PlaceNumber(
         int row,
         int column,
         int number,
         SolvingTechnique technique)
     {
+        // Place the number on the board.
         board.SetCell(row, column, number);
 
-        // Remove all candidates from the filled cell.
-        foreach (int candidate in
-                 candidateGrid.GetCandidates(row, column))
+        // Clear all candidates from the filled cell.
+        List<int> cellCandidates = new List<int>(
+            candidateGrid.GetCandidates(row, column)
+        );
+
+        foreach (int candidate in cellCandidates)
         {
             candidateGrid.RemoveCandidate(
                 row, column, candidate
             );
         }
 
-        // Remove the placed number from peer cells.
-        for (int i = 0; i < 27; i++)
+        // Update only the actual peer cells.
+        for (int peerRow = 0; peerRow < 9; peerRow++)
         {
-            List<int[]> cells = GetUnitCells(i);
-
-            foreach (int[] cell in cells)
+            for (int peerColumn = 0; peerColumn < 9; peerColumn++)
             {
-                int peerRow = cell[0];
-                int peerColumn = cell[1];
-
+                // Skip the cell where the number was placed.
                 if (peerRow == row && peerColumn == column)
                     continue;
 
+                // Check whether this cell shares a row,
+                // column, or 3x3 box with the placed cell.
+                bool sameRow = peerRow == row;
+                bool sameColumn = peerColumn == column;
+
+                bool sameBox =
+                    peerRow / 3 == row / 3 &&
+                    peerColumn / 3 == column / 3;
+
+                if (!sameRow && !sameColumn && !sameBox)
+                    continue;
+
+                // Remove the placed number from the peer.
                 if (candidateGrid.HasCandidate(
                     peerRow, peerColumn, number))
                 {
@@ -924,24 +1098,43 @@ public class DifficultyAnalyzer
         RecordTechnique(technique);
     }
 
+
     private void RecordTechnique(SolvingTechnique technique)
     {
         if (technique > highestTechnique)
             highestTechnique = technique;
     }
 
+
     private DifficultyAnalysisResult CreateResult(
         bool solved,
         string status)
     {
-        return new DifficultyAnalysisResult(
-            solved,
-            highestTechnique,
-            steps,
-            CountEmptyCells(board),
-            status
-        );
+        DifficultyAnalysisResult result =
+            new DifficultyAnalysisResult(
+                solved,
+                highestTechnique,
+                steps,
+                CountEmptyCells(board),
+                status
+            );
+
+        if (SudokuDifficultyClassifier.TryClassify(
+            result,
+            out SudokuDifficulty difficulty))
+        {
+            result.SetClassification(difficulty);
+        }
+
+        // Store the completed board only when solving succeeds.
+        if (solved)
+        {
+            result.SetSolvedBoard(board);
+        }
+
+        return result;
     }
+
 
     private bool IsBoardConsistent(SudokuBoard currentBoard)
     {
@@ -976,6 +1169,38 @@ public class DifficultyAnalyzer
         return count;
     }
 
+
+    private List<int> GetCandidateColumns(int row, int number)
+    {
+        List<int> columns = new List<int>();
+
+        for (int column = 0; column < 9; column++)
+        {
+            if (board.GetCell(row, column) == 0 &&
+                candidateGrid.HasCandidate(row, column, number))
+            {
+                columns.Add(column);
+            }
+        }
+
+        return columns;
+    }
+
+    private List<int> GetCandidateRows(int column, int number)
+    {
+        List<int> rows = new List<int>();
+
+        for (int row = 0; row < 9; row++)
+        {
+            if (board.GetCell(row, column) == 0 &&
+                candidateGrid.HasCandidate(row, column, number))
+            {
+                rows.Add(row);
+            }
+        }
+
+        return rows;
+    }
 
     #if UNITY_EDITOR
     public bool DebugApplyNakedPair(
@@ -1037,7 +1262,19 @@ public class DifficultyAnalyzer
 
         return ApplyXWing();
     }
-    
+
+    public bool DebugApplySwordfish(
+        SudokuBoard testBoard,
+        CandidateGrid testCandidates)
+    {
+        board = testBoard;
+        candidateGrid = testCandidates;
+        steps = 0;
+        highestTechnique = SolvingTechnique.None;
+
+        return ApplySwordfish();
+    }
+
     #endif
 
 }
