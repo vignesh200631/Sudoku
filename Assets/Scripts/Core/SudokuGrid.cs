@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 public class SudokuGrid : MonoBehaviour
 {
@@ -31,9 +32,17 @@ public class SudokuGrid : MonoBehaviour
     [SerializeField] private TMP_Text timerText;
     [SerializeField] private TMP_Text mistakeText;
 
+    [Header("Notes Mode UI")]
+    [SerializeField] private Image notesButtonImage;
+    [SerializeField] private TMP_Text notesButtonText;
+
+    [SerializeField] private Color notesOffColor = Color.white;
+    [SerializeField] private Color notesOnColor = new Color(0.3f, 0.8f, 0.5f);
+
     [Header("Victory UI")]
     [SerializeField] private GameObject victoryPanel;
     [SerializeField] private TMP_Text completionTimeText;
+    [SerializeField] private GameObject nextLevelButton;
 
     [Header("Game Over UI")]
     [SerializeField] private GameObject gameOverPanel;
@@ -45,6 +54,8 @@ public class SudokuGrid : MonoBehaviour
     private int incorrectCount = 0;
     private float elapsedTime = 0f;
     private bool gameOver = false;
+    private bool notesMode = false;
+    public bool IsNotesMode => notesMode;
 
     private int selectedRow = -1;
     private int selectedColumn = -1;
@@ -102,6 +113,9 @@ public class SudokuGrid : MonoBehaviour
         incorrectCount = 0;
         elapsedTime = 0f;
         gameOver = false;
+        notesMode = false;
+
+        UpdateNotesModeUI();
 
         selectedRow = -1;
         selectedColumn = -1;
@@ -116,8 +130,6 @@ public class SudokuGrid : MonoBehaviour
 
         if (gameOverPanel != null)
             gameOverPanel.SetActive(false);
-
-        Debug.Log("Loaded " + difficulty + " Sudoku puzzle!");
     }
 
 
@@ -132,7 +144,6 @@ public class SudokuGrid : MonoBehaviour
 
         if (puzzleBoard == null || solutionBoard == null)
         {
-            Debug.LogError("Invalid Sudoku level data!");
             return;
         }
 
@@ -155,6 +166,9 @@ public class SudokuGrid : MonoBehaviour
         incorrectCount = 0;
         elapsedTime = 0f;
         gameOver = false;
+        notesMode = false;
+
+        UpdateNotesModeUI();
 
         selectedRow = -1;
         selectedColumn = -1;
@@ -276,11 +290,10 @@ public class SudokuGrid : MonoBehaviour
             return;
 
         if (selectedRow == -1 || selectedColumn == -1)
-        {
             return;
-        }
 
-        GridSquare selectedCell = gridSquareArray[selectedRow, selectedColumn];
+        GridSquare selectedCell =
+            gridSquareArray[selectedRow, selectedColumn];
 
         if (selectedCell.IsFixed())
         {
@@ -288,6 +301,20 @@ public class SudokuGrid : MonoBehaviour
             return;
         }
 
+        // Notes mode: add or remove candidate.
+        if (notesMode)
+        {
+            if (selectedCell.GetNumber() != 0)
+            {
+                Debug.Log("Cannot add notes to a filled cell!");
+                return;
+            }
+
+            selectedCell.ToggleNote(number);
+            return;
+        }
+
+        // Normal answer entry.
         if (IsCorrectAnswer(selectedRow, selectedColumn, number))
         {
             selectedCell.SetNumber(number);
@@ -402,6 +429,37 @@ public class SudokuGrid : MonoBehaviour
         victoryPanel.SetActive(true);
 
         Debug.Log("Congratulations! Sudoku completed!");
+
+        // Show Next Level only if another level exists.
+        if (nextLevelButton != null && levelManager != null)
+        {
+            bool hasNextLevel =
+                levelManager.CurrentLevelNumber < levelManager.TotalLevels;
+
+            nextLevelButton.SetActive(hasNextLevel);
+        }
+    }
+
+    public void LoadNextLevel()
+    {
+        if (levelManager == null)
+        {
+            Debug.LogError("SudokuLevelManager reference is missing!");
+            return;
+        }
+    
+        int nextLevel = levelManager.CurrentLevelNumber + 1;
+    
+        if (nextLevel > levelManager.TotalLevels)
+        {
+            Debug.Log("You have completed all Sudoku levels!");
+            return;
+        }
+    
+        // Load the next level.
+        levelManager.LoadLevel(nextLevel);
+    
+        Debug.Log("Started Level " + nextLevel);
     }
 
     public void RestartPuzzle()
@@ -422,4 +480,34 @@ public class SudokuGrid : MonoBehaviour
         selectedDifficulty = difficulty;
     }
 
+    public void ToggleNotesMode()
+    {
+        if (gameOver)
+            return;
+
+        notesMode = !notesMode;
+
+        UpdateNotesModeUI();
+
+        Debug.Log(
+            notesMode
+            ? "Notes Mode Enabled"
+            : "Notes Mode Disabled"
+        );
+    }
+
+    private void UpdateNotesModeUI()
+    {
+        if (notesButtonImage != null)
+        {
+            notesButtonImage.color =
+                notesMode ? notesOnColor : notesOffColor;
+        }
+
+        if (notesButtonText != null)
+        {
+            notesButtonText.text =
+                notesMode ? "Pencil ON" : "Pencil OFF";
+        }
+    }
 }

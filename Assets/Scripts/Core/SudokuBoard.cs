@@ -19,9 +19,7 @@ public class SudokuBoard
     {
         if (initialCells == null || initialCells.Length != CellCount)
         {
-            throw new ArgumentException(
-                "Sudoku board must contain exactly 81 cells."
-            );
+            throw new ArgumentException("Sudoku board must contain exactly 81 cells.");
         }
 
         cells = (int[])initialCells.Clone();
@@ -30,9 +28,7 @@ public class SudokuBoard
         {
             if (cells[i] < 0 || cells[i] > 9)
             {
-                throw new ArgumentException(
-                    "Cell values must be between 0 and 9."
-                );
+                throw new ArgumentException("Cell values must be between 0 and 9.");
             }
         }
     }
@@ -40,12 +36,9 @@ public class SudokuBoard
     // Convert row and column into array index.
     public static int GetIndex(int row, int column)
     {
-        if (row < 0 || row >= Size ||
-            column < 0 || column >= Size)
+        if (row < 0 || row >= Size || column < 0 || column >= Size)
         {
-            throw new ArgumentOutOfRangeException(
-                "Invalid Sudoku coordinates."
-            );
+            throw new ArgumentOutOfRangeException("Invalid Sudoku coordinates.");
         }
 
         return row * Size + column;
@@ -76,9 +69,7 @@ public class SudokuBoard
 
         if (value < 0 || value > 9)
         {
-            throw new ArgumentOutOfRangeException(
-                "Sudoku values must be between 0 and 9."
-            );
+            throw new ArgumentOutOfRangeException("Sudoku values must be between 0 and 9.");
         }
 
         cells[index] = value;
@@ -97,14 +88,9 @@ public class SudokuBoard
     }
 
     // Check row, column and 3x3 block rules.
-    public bool IsValidPlacement(
-        int row,
-        int column,
-        int number)
+    public bool IsValidPlacement(int row, int column, int number)
     {
-        if (row < 0 || row >= Size ||
-            column < 0 || column >= Size ||
-            number < 1 || number > 9)
+        if (row < 0 || row >= Size || column < 0 || column >= Size || number < 1 || number > 9)
         {
             return false;
         }
@@ -112,8 +98,7 @@ public class SudokuBoard
         // Check row.
         for (int col = 0; col < Size; col++)
         {
-            if (col != column &&
-                GetCell(row, col) == number)
+            if (col != column && GetCell(row, col) == number)
             {
                 return false;
             }
@@ -122,8 +107,7 @@ public class SudokuBoard
         // Check column.
         for (int r = 0; r < Size; r++)
         {
-            if (r != row &&
-                GetCell(r, column) == number)
+            if (r != row && GetCell(r, column) == number)
             {
                 return false;
             }
@@ -136,11 +120,9 @@ public class SudokuBoard
         // Check 3x3 block.
         for (int r = startRow; r < startRow + 3; r++)
         {
-            for (int c = startColumn;
-                 c < startColumn + 3; c++)
+            for (int c = startColumn; c < startColumn + 3; c++)
             {
-                if ((r != row || c != column) &&
-                    GetCell(r, c) == number)
+                if ((r != row || c != column) && GetCell(r, c) == number)
                 {
                     return false;
                 }
@@ -202,9 +184,7 @@ public class SudokuBoard
     {
         if (index < 0 || index >= CellCount)
         {
-            throw new ArgumentOutOfRangeException(
-                "Invalid Sudoku cell index."
-            );
+            throw new ArgumentOutOfRangeException("Invalid Sudoku cell index.");
         }
     }
 }
