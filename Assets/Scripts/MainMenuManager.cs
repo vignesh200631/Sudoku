@@ -5,62 +5,38 @@ public class MainMenuManager : MonoBehaviour
 {
     [Header("Panels")]
     [SerializeField] private GameObject homePanel;
-    [SerializeField] private GameObject difficultyPanel;
+    [SerializeField] private GameObject levelSelectionPanel;
     [SerializeField] private GameObject sudokuPanel;
 
     [Header("Game Reference")]
-    [SerializeField] private SudokuGrid sudokuGrid;
+    [SerializeField] private LevelSelectionManager levelSelectionManager;
 
     private void Start()
     {
         ShowHomePanel();
     }
 
+    // Home Screen
     public void ShowHomePanel()
     {
         homePanel.SetActive(true);
-        difficultyPanel.SetActive(false);
+        levelSelectionPanel.SetActive(false);
         sudokuPanel.SetActive(false);
     }
 
-    public void ShowDifficultyPanel()
+    // Play Button: Open Level Selection
+    public void ShowLevelSelection()
     {
         homePanel.SetActive(false);
-        difficultyPanel.SetActive(true);
+        levelSelectionPanel.SetActive(true);
         sudokuPanel.SetActive(false);
+
+        levelSelectionManager.RefreshLevelButtons();
     }
 
-    public void StartEasyGame()
-    {
-        StartGame(SudokuDifficulty.Easy);
-    }
-
-    public void StartMediumGame()
-    {
-        StartGame(SudokuDifficulty.Medium);
-    }
-
-    public void StartHardGame()
-    {
-        StartGame(SudokuDifficulty.Hard);
-    }
-
-    private void StartGame(SudokuDifficulty difficulty)
-    {
-        // Activate Sudoku panel first.
-        sudokuPanel.SetActive(true);
-
-        // Initialize the selected puzzle.
-        sudokuGrid.InitializePuzzle(difficulty);
-
-        homePanel.SetActive(false);
-        difficultyPanel.SetActive(false);
-    }
-
+    // Return from Level Selection to Home
     public void ReturnToHome()
     {
-        sudokuPanel.SetActive(false);
-        difficultyPanel.SetActive(false);
-        homePanel.SetActive(true);
+        ShowHomePanel();
     }
 }

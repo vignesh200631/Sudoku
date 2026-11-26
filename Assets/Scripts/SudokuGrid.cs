@@ -24,6 +24,9 @@ public class SudokuGrid : MonoBehaviour
     [Header("Game Settings")]
     [SerializeField] private int maxMistakes = 3;
 
+    [Header("Level Progress")]
+    [SerializeField] private SudokuLevelManager levelManager;
+
     [Header("UI References")]
     [SerializeField] private TMP_Text timerText;
     [SerializeField] private TMP_Text mistakeText;
@@ -116,6 +119,58 @@ public class SudokuGrid : MonoBehaviour
 
         Debug.Log("Loaded " + difficulty + " Sudoku puzzle!");
     }
+
+
+    public void InitializeLevel(
+        SudokuBoard puzzleBoard,
+        SudokuBoard solutionBoard)
+    {
+        InitializeGridOnce();
+
+        if (!gridInitialized)
+            return;
+
+        if (puzzleBoard == null || solutionBoard == null)
+        {
+            Debug.LogError("Invalid Sudoku level data!");
+            return;
+        }
+
+        puzzle = puzzleBoard.ToTwoDimensionalArray();
+        solution = solutionBoard.ToTwoDimensionalArray();
+
+        // Reset every cell using the selected level.
+        for (int row = 0; row < rows; row++)
+        {
+            for (int column = 0; column < columns; column++)
+            {
+                GridSquare cell = gridSquareArray[row, column];
+
+                cell.SetPuzzleNumber(puzzle[row, column]);
+                cell.SetCellColor(normalColor);
+            }
+        }
+
+        // Reset gameplay state.
+        incorrectCount = 0;
+        elapsedTime = 0f;
+        gameOver = false;
+
+        selectedRow = -1;
+        selectedColumn = -1;
+
+        UpdateMistakeCounter();
+        timerText.text = "00:00";
+
+        if (victoryPanel != null)
+            victoryPanel.SetActive(false);
+
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
+
+        Debug.Log("Sudoku level loaded successfully!");
+    }
+
 
     private void Update()
     {
@@ -335,6 +390,10 @@ public class SudokuGrid : MonoBehaviour
     {
         gameOver = true;
 
+        // Unlock the next level after successful completion.
+        if (levelManager != null)
+            levelManager.CompleteCurrentLevel();
+
         int minutes = Mathf.FloorToInt(elapsedTime / 60);
         int seconds = Mathf.FloorToInt(elapsedTime % 60);
 
@@ -345,10 +404,17 @@ public class SudokuGrid : MonoBehaviour
         Debug.Log("Congratulations! Sudoku completed!");
     }
 
-
     public void RestartPuzzle()
     {
-        InitializePuzzle(selectedDifficulty);
+        if (levelManager != null &&
+            levelManager.CurrentLevelNumber > 0)
+        {
+            levelManager.ReloadCurrentLevel();
+        }
+        else
+        {
+            InitializePuzzle(selectedDifficulty);
+        }
     }
 
     public void SetDifficulty(SudokuDifficulty difficulty)
